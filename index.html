@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  
+  <script src="tau-prolog.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificador de Cursos Prolog simulacion</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #007bff;
+            margin-top: 20px;
+        }
+        .alumno-select, .aprobacion-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .curso-list {
+            list-style: none;
+            padding: 0;
+        }
+        .curso-list li {
+            background: #e9ecef;
+            margin-bottom: 5px;
+            padding: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .seleccionado {
+            background-color: #ffc107;
+            font-weight: bold;
+        }
+        .disponible {
+            background-color: #d4edda;
+        }
+        .aprobado {
+            background-color: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Planificador de Cursos (Lógica Prolog)</h1>
+
+    <div class="alumno-select">
+        <h2>Seleccionar Alumno</h2>
+        <select id="alumno-dropdown">
+            <option value="juan">Juan</option>
+            <option value="maria">María</option>
+            <option value="pedro">Pedro (Nuevo)</option>
+        </select>
+        <button onclick="cargarEstadoAlumno()">Cargar Estado</button>
+    </div>
+    
+    <div class="aprobacion-section">
+        <h2>Cursos Aprobados por <span id="nombre-alumno">...</span></h2>
+        <p>Añade o quita cursos para simular la base de conocimiento.</p>
+        <div id="aprobados-list"></div>
+    </div>
+
+    <hr>
+    
+    <h2>Cursos Disponibles</h2>
+    <p>Lista de cursos que puedes tomar en el siguiente semestre.</p>
+    <ul id="cursos-disponibles" class="curso-list">
+        <li>Cargando...</li>
+    </ul>
+    
+    <hr>
+
+    <h2>Plan del Semestre</h2>
+    <p>Cursos que has agregado a tu plan de estudios.</p>
+    <ul id="cursos-seleccionados" class="curso-list">
+        <li>Ningún curso seleccionado.</li>
+    </ul>
+</div>
+
+<script>
+  
+    const cursos = {
+        mat1: { nombre: 'Matemáticas I', creditos: 6 },
+        mat2: { nombre: 'Matemáticas II', creditos: 6 },
+        fis1: { nombre: 'Física I', creditos: 5 },
+        fis2: { nombre: 'Física II', creditos: 5 },
+        prog1: { nombre: 'Programación I', creditos: 6 },
+        prog2: { nombre: 'Programación II', creditos: 6 },
+        edatos: { nombre: 'Estructuras de Datos', creditos: 6 },
+        alg: { nombre: 'Algoritmos', creditos: 6 },
+        bd: { nombre: 'Bases de Datos', creditos: 5 },
+        so: { nombre: 'Sistemas Operativos', creditos: 5 },
+        redes: { nombre: 'Redes de Computadoras', creditos: 5 },
+        ingsoft: { nombre: 'Ingeniería de Software', creditos: 6 }
+    };
+
+    const prerequisitos = {
+        mat2: ['mat1'],
+        fis2: ['fis1'],
+        prog2: ['prog1'],
+        edatos: ['prog2'],
+        alg: ['edatos'],
+        bd: ['prog2'],
+        so: ['prog2'],
+        redes: ['so'],
+        ingsoft: ['alg', 'bd']
+    };
+
+    // Almacenamiento
+    let estadoAlumno = {
+        'juan': {
+            aprobado: new Set(['mat1', 'fis1', 'prog1', 'prog2', 'edatos']),
+            seleccionado: new Set()
+        },
+        'maria': {
+            aprobado: new Set(['mat1', 'mat2', 'fis1', 'fis2', 'prog1', 'prog2']),
+            seleccionado: new Set()
+        },
+        'pedro': {
+            aprobado: new Set(),
+            seleccionado: new Set()
+        }
+    };
+    
+    let alumnoActual = 'juan';
+
+    // REGLAs
+    
+    function isAprobado(curso) {
+        return estadoAlumno[alumnoActual].aprobado.has(curso);
+    }
+
+    function todosPrerequisitosAprobados(curso) {
+        const pre = prerequisitos[curso];
+        if (!pre) return true; //
+        return pre.every(p => isAprobado(p));
+    }
+
+    function puedeTomar(curso) {
+        if (isAprobado(curso)) return false;
+        return todosPrerequisitosAprobados(curso);
+    }
+    
+    function cargarEstadoAlumno() {
+        const dropdown = document.getElementById('alumno-dropdown');
+        alumnoActual = dropdown.value;
+        document.getElementById('nombre-alumno').textContent = alumnoActual.charAt(0).toUpperCase() + alumnoActual.slice(1);
+        
+        actualizarAprobados();
+        actualizarDisponibles();
+        actualizarSeleccionados();
+    }
+    
+    function actualizarAprobados() {
+        const list = document.getElementById('aprobados-list');
+        list.innerHTML = '';
+        
+        const aprobadoSet = estadoAlumno[alumnoActual].aprobado;
+
+        Object.keys(cursos).forEach(codigo => {
+            const li = document.createElement('li');
+            li.innerHTML = `${codigo.toUpperCase()}: ${cursos[codigo].nombre} (${cursos[codigo].creditos} Créditos)`;
+            
+            const button = document.createElement('button');
+            
+            if (aprobadoSet.has(codigo)) {
+                li.classList.add('aprobado');
+                button.textContent = 'Desmarcar Aprobado';
+                button.onclick = () => desmarcarAprobado(codigo);
+            } else {
+                li.classList.remove('aprobado');
+                button.textContent = 'Marcar Aprobado';
+                button.style.backgroundColor = '#6c757d';
+                button.onclick = () => marcarAprobado(codigo);
+            }
+            
+            li.appendChild(button);
+            list.appendChild(li);
+        });
+    }
+
+    function actualizarDisponibles() {
+        const list = document.getElementById('cursos-disponibles');
+        list.innerHTML = '';
+        const seleccionadoSet = estadoAlumno[alumnoActual].seleccionado;
+        let found = false;
+        
+        Object.keys(cursos).sort().forEach(codigo => {
+            if (puedeTomar(codigo)) {
+                found = true;
+                const li = document.createElement('li');
+                li.classList.add('disponible');
+                
+                li.innerHTML = `${codigo.toUpperCase()}: ${cursos[codigo].nombre} (${cursos[codigo].creditos} Créditos)`;
+                
+                const button = document.createElement('button');
+                if (seleccionadoSet.has(codigo)) {
+                    button.textContent = 'Seleccionado ✅';
+                    button.style.backgroundColor = '#007bff';
+                    button.onclick = () => deseleccionarCurso(codigo);
+                } else {
+                    button.textContent = 'Seleccionar ➕';
+                    button.onclick = () => seleccionarCurso(codigo);
+                }
+                
+                li.appendChild(button);
+                list.appendChild(li);
+            }
+        });
+        
+        if (!found) {
+            list.innerHTML = '<li>¡No hay cursos disponibles actualmente!</li>';
+        }
+    }
+    
+    function actualizarSeleccionados() {
+        const list = document.getElementById('cursos-seleccionados');
+        list.innerHTML = '';
+        const seleccionadoSet = estadoAlumno[alumnoActual].seleccionado;
+        
+        if (seleccionadoSet.size === 0) {
+            list.innerHTML = '<li>Ningún curso seleccionado.</li>';
+            return;
+        }
+
+        Array.from(seleccionadoSet).sort().forEach(codigo => {
+            const li = document.createElement('li');
+            li.classList.add('seleccionado');
+            li.innerHTML = `${codigo.toUpperCase()}: ${cursos[codigo].nombre}`;
+            
+            const button = document.createElement('button');
+            button.textContent = 'Quitar ❌';
+            button.style.backgroundColor = '#dc3545';
+            button.onclick = () => deseleccionarCurso(codigo);
+            
+            li.appendChild(button);
+            list.appendChild(li);
+        });
+    }
+    
+    function marcarAprobado(curso) {
+        estadoAlumno[alumnoActual].aprobado.add(curso);
+
+        cargarEstadoAlumno();
+    }
+    
+    function desmarcarAprobado(curso) {
+        estadoAlumno[alumnoActual].aprobado.delete(curso);
+        estadoAlumno[alumnoActual].seleccionado.delete(curso); 
+        cargarEstadoAlumno();
+    }
+
+    function seleccionarCurso(curso) {
+        if (puedeTomar(curso)) {
+            estadoAlumno[alumnoActual].seleccionado.add(curso);
+            actualizarDisponibles();
+            actualizarSeleccionados();
+        } else {
+            alert(`Error: No puedes seleccionar ${cursos[curso].nombre} porque no cumples los requisitos.`);
+        }
+    }
+    
+    function deseleccionarCurso(curso) {
+        estadoAlumno[alumnoActual].seleccionado.delete(curso);
+        actualizarDisponibles();
+        actualizarSeleccionados();
+    }
+    
+    window.onload = cargarEstadoAlumno;
+</script>
+
+</body>
+</html>
