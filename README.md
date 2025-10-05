@@ -5,7 +5,7 @@
 1. Descarga el proyecto desde GitHub o desde el archivo `.zip` proporcionado por el autor.
    - Si está en GitHub:
      ```bash
-     git clone https://github.com/TU_USUARIO/prolog-course-selection.git](https://github.com/BrandoParedes1999/Actividad_Prolog-js.git
+     git clone https://github.com/BrandoParedes1999/Actividad_Prolog-js.git
      ```
 
 2. Descomprime el archivo (si descargaste el `.zip`).
